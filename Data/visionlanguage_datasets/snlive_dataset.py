@@ -36,16 +36,16 @@ class SnliVeDataset_ViLT(Dataset):
         vilt_config = ViltConfig.from_pretrained(os.path.join(VILT_ckpt_dir,"vilt"))
         self.max_text_length = 30
 
-        self.image_list = os.listdir(os.path.join(self.data_dir,"snli_ve_data","flickr30k_images"))
+        self.image_list = os.listdir(os.path.join(self.data_dir,"snli-ve","flickr30k_images"))
         
         if low_shot_config.key:
             if split == "train":
-                self.cached_data_file = os.path.join(self.data_dir,"snli_ve_data","cached_data_file","snli_ve_train_2048shot.pkl")
+                self.cached_data_file = os.path.join(self.data_dir,"snli-ve","cached_data_file","snli_ve_train_2048shot.pkl")
             else:
-                self.cached_data_file = os.path.join(self.data_dir,"snli_ve_data","cached_data_file","snli_ve_{}.pkl".format(split))
+                self.cached_data_file = os.path.join(self.data_dir,"snli-ve","cached_data_file","snli_ve_{}.pkl".format(split))
         else:
-            data_path = os.path.join(self.data_dir,"snli_ve_data","snli_ve_{}.jsonl".format(split))
-            self.cached_data_file = os.path.join(self.data_dir,"snli_ve_data","cached_data_file","snli_ve_{}.pkl".format(split))
+            data_path = os.path.join(self.data_dir,"snli-ve","snli_ve_{}.jsonl".format(split))
+            self.cached_data_file = os.path.join(self.data_dir,"snli-ve","cached_data_file","snli_ve_{}.pkl".format(split))
 
         if os.path.exists(self.cached_data_file):
             self.dataset = pickle.load(open(self.cached_data_file,'rb'))
@@ -79,7 +79,7 @@ class SnliVeDataset_ViLT(Dataset):
         image_id = example["image_id"]
         label = example["label"]
 
-        image_path = os.path.join(self.data_dir,"snli_ve_data","flickr30k_images",str(image_id)+".jpg")
+        image_path = os.path.join(self.data_dir,"snli-ve","flickr30k_images",str(image_id)+".jpg")
         if not os.path.exists(image_path):
             raise ValueError
         image = Image.open(image_path)

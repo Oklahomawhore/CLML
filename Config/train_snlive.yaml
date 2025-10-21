@@ -34,7 +34,7 @@ datasets:
   selected: 
   - vl
   vl:
-    data_dir: ""
+    data_dir: "/data/wangshu/wangshu_code/lihong_workspace/Data"
     low_shot_config: 
       key: False
       num_low_shot: 2048
@@ -50,8 +50,8 @@ model:
   num_classes: 3
   classifier_in_dim: 768
   update_method: "fine-tuning" 
-  VILT_ckpt_dir: ""
-  VILT_tokenizer: ""
+  VILT_ckpt_dir: "/data/wangshu/wangshu_code/lihong_workspace/Checkpoint"
+  VILT_tokenizer: "/data/wangshu/wangshu_code/lihong_workspace/Checkpoint/vilt"
   cl_setting:
     key: "none"
     ewc_fisher_sample_percentage: 0.01

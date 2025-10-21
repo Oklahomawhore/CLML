@@ -1,0 +1,101 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Virtual environments
+venv/
+env/
+ENV/
+.venv
+
+# UV package manager
+.uv/
+uv.lock
+
+# PyTorch
+*.pth
+*.pt
+*.ckpt
+*.safetensors
+
+# Lightning
+lightning_logs/
+checkpoints/
+.neptune/
+mlruns/
+
+# Hydra
+outputs/
+multirun/
+.hydra/
+
+# Jupyter Notebook
+.ipynb_checkpoints
+*.ipynb
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Data
+data/
+datasets/
+*.csv
+*.json
+*.jsonl
+*.tsv
+*.h5
+*.hdf5
+*.pkl
+*.pickle
+
+# Models & Weights
+models/
+weights/
+pretrained/
+*.bin
+
+# Logs
+logs/
+*.log
+wandb/
+tensorboard/
+
+# Environment variables
+.env
+.env.local
+
+# OS
+Thumbs.db
+.DS_Store
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+
+# Model checkpoints
+
+Checkpoint/

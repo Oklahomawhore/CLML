@@ -117,6 +117,6 @@ class ModelArguments:
 
 @dataclass
 class MMCLArguments:
-    datasets:TrainingDatasetsInfo = TrainingDatasetsInfo()
-    training:TrainingArguments = TrainingArguments()
-    model:ModelArguments = ModelArguments()
+    datasets:TrainingDatasetsInfo = field(default_factory=TrainingDatasetsInfo)
+    training:TrainingArguments = field(default_factory=TrainingArguments)
+    model:ModelArguments = field(default_factory=ModelArguments)
