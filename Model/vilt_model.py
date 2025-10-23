@@ -36,6 +36,8 @@ class VILTLightningModule(LightningModule):
                                                     Text_adapter_infos(False,256))
                 ):
         super().__init__()
+        # debug flag: set environment variable DEBUG_PRINT_PARAMS=1 to enable
+        self.debug_print_params = os.environ.get("DEBUG_PRINT_PARAMS", "0") == "1"
         self.batch_size = batch_size
         self.target_model = target_model
         self.cur_dataset = cur_dataset
@@ -79,9 +81,44 @@ class VILTLightningModule(LightningModule):
         else:
             VILT_state_dict = torch.load(os.path.join(self.VILT_ckpt_dir,"vilt","pytorch_model.bin"))
             self.VILT.load_state_dict(VILT_state_dict,strict=False)
+
+    def _debug_param_usage(self, loss: torch.Tensor):
+        """Check which of the selected trainable parameters are used in computing `loss`.
+        This uses torch.autograd.grad with allow_unused=True: returned None means param was
+        not part of the loss graph for this forward pass.
+        """
+        if not getattr(self, 'selected_param_names', None):
+            return
+        try:
+            # compute grads w.r.t parameters without modifying .grad fields
+            grads = torch.autograd.grad(loss, self.selected_param_tensors, retain_graph=True, allow_unused=True)
+        except RuntimeError as e:
+            print(f"[DEBUG] autograd.grad failed: {e}")
+            return
+
+        unused = [name for name, g in zip(self.selected_param_names, grads) if g is None]
+        used = [name for name, g in zip(self.selected_param_names, grads) if g is not None]
+        print("[DEBUG] Selected trainable params count:", len(self.selected_param_names))
+        if len(unused) == 0:
+            print("[DEBUG] All selected trainable parameters are used in this loss.")
+        else:
+            print(f"[DEBUG] Unused parameters in current loss ({len(unused)}):")
+            for n in unused[:50]:
+                print("   ", n)
+            if len(unused) > 50:
+                print("   ... (truncated)")
     
     def training_step(self,batch,batch_idx):
         loss,accuracy = self._step(batch,batch_idx)
+        # debug: check which selected parameters participate in the loss graph
+        if getattr(self, 'debug_print_params', False):
+            try:
+                # loss may be a detached tensor in some code paths; ensure gradable
+                if not loss.requires_grad:
+                    loss = loss.clone().detach().requires_grad_(True)
+                self._debug_param_usage(loss)
+            except Exception as e:
+                print(f"[DEBUG] Exception while checking param usage: {e}")
         self.log("train_losses",
                 loss,
                 prog_bar=True,
@@ -236,41 +273,67 @@ class VILTLightningModule(LightningModule):
                                      ):
         trainable_params = []
         no_decay = ['bias', 'LayerNorm.weight']
+        selected_names = []
+        selected_tensors = []
         for name,params in model.named_parameters():
             if not any(nd in name for nd in no_decay):
                 weight_decay = adam_weight_decay
             else:
                 weight_decay = 0.0
+            print(">>>>>>", update_method)
             if update_method == "cls-head" and name.__contains__('classifier'):
                 # only update classify head
                 params.requires_grad = True
                 trainable_params += [{'params':params,'weight_decay':weight_decay,'lr':learning_rate}]
+                selected_names.append(name)
+                selected_tensors.append(params)
             elif update_method == "adapter" and (name.__contains__('classifier') or name.__contains__(f'{self.cur_dataset}_adapter') or name.__contains__('add_adapter') or name.__contains__('add')):
                 
                 params.requires_grad = True
                 trainable_params += [{'params':params,'weight_decay':weight_decay,'lr':learning_rate}]
+                selected_names.append(name)
+                selected_tensors.append(params)
             elif update_method == "fine-tuning":
                 params.requires_grad = True
                 trainable_params += [{'params':params,'weight_decay':weight_decay,'lr':learning_rate}]
+                selected_names.append(name)
+                selected_tensors.append(params)
             elif update_method == "task-incremental-generalize" and (name.__contains__('query_aftattn') or name.__contains__('query_aftmlp') or name.__contains__('classifier')):
                 params.requires_grad = True
                 if name.__contains__("query_aftattn") or name.__contains__("query_aftmlp") or name.__contains__("key_aftattn") or name.__contains__("key_aftmlp"):
                     trainable_params += [{'params':params,'weight_decay':weight_decay,'lr':learning_rate * 100}]
+                    selected_names.append(name)
+                    selected_tensors.append(params)
                 else:
                     trainable_params += [{'params':params,'weight_decay':weight_decay,'lr':learning_rate * 1}]
+                    selected_names.append(name)
+                    selected_tensors.append(params)
             elif update_method == "task-incremental-update" and (name.__contains__(f'{self.cur_dataset}') or name.__contains__('add') or name.__contains__('classifier')):
                 params.requires_grad = True
                 if name.__contains__("query_aftattn") or name.__contains__("query_aftmlp") or name.__contains__("key_aftattn") or name.__contains__("key_aftmlp"):
                     trainable_params += [{'params':params,'weight_decay':weight_decay,'lr':learning_rate * 1}]
+                    selected_names.append(name)
+                    selected_tensors.append(params)
                 elif name.__contains__("add_adapter"):
                     trainable_params += [{'params':params,'weight_decay':weight_decay,'lr':learning_rate * 1}]
+                    selected_names.append(name)
+                    selected_tensors.append(params)
                 else:
                     trainable_params += [{'params':params,'weight_decay':weight_decay,'lr':learning_rate}]
+                    selected_names.append(name)
+                    selected_tensors.append(params)
             else:
                 params.requires_grad = False
                 
         if len(trainable_params) == 0:
             raise NotImplementedError(f"{update_method} is not suitable for current methods, please specify it!")
+        # save selected params info for debugging
+        self.selected_param_names = selected_names
+        self.selected_param_tensors = selected_tensors
+        if getattr(self, 'debug_print_params', False):
+            print("[DEBUG] Selected parameters to be optimized (count =", len(selected_names), "):")
+            for n in selected_names:
+                print("   ", n)
         
         optimizer = torch.optim.AdamW(params=trainable_params,
                                     betas=adam_betas,

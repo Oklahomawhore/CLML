@@ -689,6 +689,227 @@ class ViltLayer(nn.Module):
                                             adapter_embed_dim=self.adapter_infos.adapter_embed_dim)
                     self.vqa_adapter_aftmlp = Adapter(embed_dim=config.hidden_size,
                                             adapter_embed_dim=self.adapter_infos.adapter_embed_dim)
+            elif self.target_model == "sst2-update":
+                if self.update_method == "task-incremental-update" or self.update_method == "task-incremental-generalize" or self.update_method == "upstream-generalize":
+                    if self.continual_sequence == "multi-first":
+                        # Train the adapter for current task based on the adapter from the pervious tasks and its corresponding coefficients.
+                        # snlive specific parameters
+                        self.snlive_adapter_aftattn = Adapter(embed_dim=config.hidden_size,
+                                        adapter_embed_dim=self.adapter_infos.adapter_embed_dim)
+                        self.snlive_adapter_aftmlp = Adapter(embed_dim=config.hidden_size,
+                                                adapter_embed_dim=self.adapter_infos.adapter_embed_dim)
+
+                        # piqa specific parameters
+                        self.piqa_adapter_aftattn = Adapter(embed_dim=config.hidden_size,
+                                        adapter_embed_dim=self.adapter_infos.adapter_embed_dim)
+                        self.piqa_adapter_aftmlp = Adapter(embed_dim=config.hidden_size,
+                                                adapter_embed_dim=self.adapter_infos.adapter_embed_dim)
+
+                        # iNaturalist specific parameters
+                        self.iNaturalist_adapter_aftattn = Adapter(embed_dim=config.hidden_size,
+                                        adapter_embed_dim=self.adapter_infos.adapter_embed_dim)
+                        self.iNaturalist_adapter_aftmlp = Adapter(embed_dim=config.hidden_size,
+                                                adapter_embed_dim=self.adapter_infos.adapter_embed_dim)
+
+                        # VQA specific parameters
+                        self.vqa_adapter_aftattn = Adapter(embed_dim=config.hidden_size,
+                                        adapter_embed_dim=self.adapter_infos.adapter_embed_dim)
+                        self.vqa_adapter_aftmlp = Adapter(embed_dim=config.hidden_size,
+                                                adapter_embed_dim=self.adapter_infos.adapter_embed_dim)
+
+                        # SST-2 specific parameters
+                        self.sst2_adapter_aftattn = Adapter(embed_dim=config.hidden_size,
+                                        adapter_embed_dim=self.adapter_infos.adapter_embed_dim)
+                        self.sst2_adapter_aftmlp = Adapter(embed_dim=config.hidden_size,
+                                                adapter_embed_dim=self.adapter_infos.adapter_embed_dim)
+
+                        if self.cur_dataset in ["vcr","commonsenseqa","places365","nlvr2"] and self.update_method == "task-incremental-update":
+                            self.add_adapter_aftattn = Adapter(embed_dim=config.hidden_size,
+                                                adapter_embed_dim=self.adapter_infos.adapter_embed_dim)
+                            self.add_adapter_aftmlp = Adapter(embed_dim=config.hidden_size,
+                                                    adapter_embed_dim=self.adapter_infos.adapter_embed_dim)
+
+                        if self.adapter_weighted_method == "adapter-dimension-weighted":
+                            self.snlive_key_aftattn = nn.Parameter(torch.randn(24,config.hidden_size))
+                            self.snlive_key_aftmlp = nn.Parameter(torch.randn(24,config.hidden_size))
+
+                            self.snlive_query_aftattn = nn.Parameter(torch.randn(24,config.hidden_size))
+                            self.snlive_query_aftmlp = nn.Parameter(torch.randn(24,config.hidden_size))
+                            
+                            self.piqa_key_aftattn = nn.Parameter(torch.randn(24,config.hidden_size))
+                            self.piqa_key_aftmlp = nn.Parameter(torch.randn(24,config.hidden_size))
+
+                            self.piqa_query_aftattn = nn.Parameter(torch.randn(24,config.hidden_size))
+                            self.piqa_query_aftmlp = nn.Parameter(torch.randn(24,config.hidden_size))
+                            
+                            self.iNaturalist_key_aftattn = nn.Parameter(torch.randn(24,config.hidden_size))
+                            self.iNaturalist_key_aftmlp = nn.Parameter(torch.randn(24,config.hidden_size))
+
+                            self.iNaturalist_query_aftattn = nn.Parameter(torch.randn(24,config.hidden_size))
+                            self.iNaturalist_query_aftmlp = nn.Parameter(torch.randn(24,config.hidden_size))
+
+                            self.vqa_key_aftattn = nn.Parameter(torch.randn(24,config.hidden_size))
+                            self.vqa_key_aftmlp = nn.Parameter(torch.randn(24,config.hidden_size))
+
+                            self.vqa_query_aftattn = nn.Parameter(torch.randn(24,config.hidden_size))
+                            self.vqa_query_aftmlp = nn.Parameter(torch.randn(24,config.hidden_size))
+
+                            self.sst2_key_aftattn = nn.Parameter(torch.randn(24,config.hidden_size))
+                            self.sst2_key_aftmlp = nn.Parameter(torch.randn(24,config.hidden_size))
+
+                            self.sst2_query_aftattn = nn.Parameter(torch.randn(24,config.hidden_size))
+                            self.sst2_query_aftmlp = nn.Parameter(torch.randn(24,config.hidden_size))
+                        elif self.adapter_weighted_method == "adapter-whole-weighted":
+                            self.snlive_key_aftattn = nn.Parameter(torch.randn(config.hidden_size))
+                            self.snlive_key_aftmlp = nn.Parameter(torch.randn(config.hidden_size))
+
+                            self.snlive_query_aftattn = nn.Parameter(torch.randn(1,config.hidden_size))
+                            self.snlive_query_aftmlp = nn.Parameter(torch.randn(1,config.hidden_size))
+                            
+                            self.piqa_key_aftattn = nn.Parameter(torch.randn(config.hidden_size))
+                            self.piqa_key_aftmlp = nn.Parameter(torch.randn(config.hidden_size))
+
+                            self.piqa_query_aftattn = nn.Parameter(torch.randn(1,config.hidden_size))
+                            self.piqa_query_aftmlp = nn.Parameter(torch.randn(1,config.hidden_size))
+                            
+                            self.iNaturalist_key_aftattn = nn.Parameter(torch.randn(config.hidden_size))
+                            self.iNaturalist_key_aftmlp = nn.Parameter(torch.randn(config.hidden_size))
+
+                            self.iNaturalist_query_aftattn = nn.Parameter(torch.randn(1,config.hidden_size))
+                            self.iNaturalist_query_aftmlp = nn.Parameter(torch.randn(1,config.hidden_size))
+
+                            self.vqa_key_aftattn = nn.Parameter(torch.randn(config.hidden_size))
+                            self.vqa_key_aftmlp = nn.Parameter(torch.randn(config.hidden_size))
+
+                            self.vqa_query_aftattn = nn.Parameter(torch.randn(1,config.hidden_size))
+                            self.vqa_query_aftmlp = nn.Parameter(torch.randn(1,config.hidden_size))
+
+                            self.sst2_key_aftattn = nn.Parameter(torch.randn(config.hidden_size))
+                            self.sst2_key_aftmlp = nn.Parameter(torch.randn(config.hidden_size))
+
+                            self.sst2_query_aftattn = nn.Parameter(torch.randn(1,config.hidden_size))
+                            self.sst2_query_aftmlp = nn.Parameter(torch.randn(1,config.hidden_size))
+
+                            if self.cur_dataset in ["vcr","commonsenseqa","places365","nlvr2"] and self.update_method == "task-incremental-update":
+                                self.add_query_aftattn = nn.Parameter(torch.randn(1,config.hidden_size))
+                                self.add_query_aftmlp = nn.Parameter(torch.randn(1,config.hidden_size))
+                                
+                                self.add_key_aftattn = nn.Parameter(torch.randn(config.hidden_size))
+                                self.add_key_aftmlp = nn.Parameter(torch.randn(config.hidden_size))
+                        else:
+                            raise NotImplementedError
+                    else:
+                        # Train the adapter for current task based on the adapter from the pervious tasks and its corresponding coefficients.
+                        # snlive specific parameters
+                        self.snlive_adapter_aftattn = Adapter(embed_dim=config.hidden_size,
+                                        adapter_embed_dim=self.adapter_infos.adapter_embed_dim)
+                        self.snlive_adapter_aftmlp = Adapter(embed_dim=config.hidden_size,
+                                                adapter_embed_dim=self.adapter_infos.adapter_embed_dim)
+
+                        # piqa specific parameters
+                        self.piqa_adapter_aftattn = Adapter(embed_dim=config.hidden_size,
+                                        adapter_embed_dim=self.adapter_infos.adapter_embed_dim)
+                        self.piqa_adapter_aftmlp = Adapter(embed_dim=config.hidden_size,
+                                                adapter_embed_dim=self.adapter_infos.adapter_embed_dim)
+
+                        # iNaturalist specific parameters
+                        self.iNaturalist_adapter_aftattn = Adapter(embed_dim=config.hidden_size,
+                                        adapter_embed_dim=self.adapter_infos.adapter_embed_dim)
+                        self.iNaturalist_adapter_aftmlp = Adapter(embed_dim=config.hidden_size,
+                                                adapter_embed_dim=self.adapter_infos.adapter_embed_dim)
+
+                        # VQA specific parameters
+                        self.vqa_adapter_aftattn = Adapter(embed_dim=config.hidden_size,
+                                        adapter_embed_dim=self.adapter_infos.adapter_embed_dim)
+                        self.vqa_adapter_aftmlp = Adapter(embed_dim=config.hidden_size,
+                                                adapter_embed_dim=self.adapter_infos.adapter_embed_dim)
+
+                        # SST-2 specific parameters
+                        self.sst2_adapter_aftattn = Adapter(embed_dim=config.hidden_size,
+                                        adapter_embed_dim=self.adapter_infos.adapter_embed_dim)
+                        self.sst2_adapter_aftmlp = Adapter(embed_dim=config.hidden_size,
+                                                adapter_embed_dim=self.adapter_infos.adapter_embed_dim)
+
+                        if self.cur_dataset in ["vcr","commonsenseqa","places365","nlvr2"] and self.update_method == "task-incremental-update":
+                            self.add_adapter_aftattn = Adapter(embed_dim=config.hidden_size,
+                                                adapter_embed_dim=self.adapter_infos.adapter_embed_dim)
+                            self.add_adapter_aftmlp = Adapter(embed_dim=config.hidden_size,
+                                                    adapter_embed_dim=self.adapter_infos.adapter_embed_dim)
+
+                        if self.adapter_weighted_method == "adapter-dimension-weighted":
+                            self.snlive_key_aftattn = nn.Parameter(torch.randn(24,config.hidden_size))
+                            self.snlive_key_aftmlp = nn.Parameter(torch.randn(24,config.hidden_size))
+
+                            self.snlive_query_aftattn = nn.Parameter(torch.randn(24,config.hidden_size))
+                            self.snlive_query_aftmlp = nn.Parameter(torch.randn(24,config.hidden_size))
+                            
+                            self.piqa_key_aftattn = nn.Parameter(torch.randn(24,config.hidden_size))
+                            self.piqa_key_aftmlp = nn.Parameter(torch.randn(24,config.hidden_size))
+
+                            self.piqa_query_aftattn = nn.Parameter(torch.randn(24,config.hidden_size))
+                            self.piqa_query_aftmlp = nn.Parameter(torch.randn(24,config.hidden_size))
+                            
+                            self.iNaturalist_key_aftattn = nn.Parameter(torch.randn(24,config.hidden_size))
+                            self.iNaturalist_key_aftmlp = nn.Parameter(torch.randn(24,config.hidden_size))
+
+                            self.iNaturalist_query_aftattn = nn.Parameter(torch.randn(24,config.hidden_size))
+                            self.iNaturalist_query_aftmlp = nn.Parameter(torch.randn(24,config.hidden_size))
+
+                            self.vqa_key_aftattn = nn.Parameter(torch.randn(24,config.hidden_size))
+                            self.vqa_key_aftmlp = nn.Parameter(torch.randn(24,config.hidden_size))
+
+                            self.vqa_query_aftattn = nn.Parameter(torch.randn(24,config.hidden_size))
+                            self.vqa_query_aftmlp = nn.Parameter(torch.randn(24,config.hidden_size))
+
+                            self.sst2_key_aftattn = nn.Parameter(torch.randn(24,config.hidden_size))
+                            self.sst2_key_aftmlp = nn.Parameter(torch.randn(24,config.hidden_size))
+
+                            self.sst2_query_aftattn = nn.Parameter(torch.randn(24,config.hidden_size))
+                            self.sst2_query_aftmlp = nn.Parameter(torch.randn(24,config.hidden_size))
+                        elif self.adapter_weighted_method == "adapter-whole-weighted":
+                            self.snlive_key_aftattn = nn.Parameter(torch.randn(config.hidden_size))
+                            self.snlive_key_aftmlp = nn.Parameter(torch.randn(config.hidden_size))
+
+                            self.snlive_query_aftattn = nn.Parameter(torch.randn(1,config.hidden_size))
+                            self.snlive_query_aftmlp = nn.Parameter(torch.randn(1,config.hidden_size))
+                            
+                            self.piqa_key_aftattn = nn.Parameter(torch.randn(config.hidden_size))
+                            self.piqa_key_aftmlp = nn.Parameter(torch.randn(config.hidden_size))
+
+                            self.piqa_query_aftattn = nn.Parameter(torch.randn(1,config.hidden_size))
+                            self.piqa_query_aftmlp = nn.Parameter(torch.randn(1,config.hidden_size))
+                            
+                            self.iNaturalist_key_aftattn = nn.Parameter(torch.randn(config.hidden_size))
+                            self.iNaturalist_key_aftmlp = nn.Parameter(torch.randn(config.hidden_size))
+
+                            self.iNaturalist_query_aftattn = nn.Parameter(torch.randn(1,config.hidden_size))
+                            self.iNaturalist_query_aftmlp = nn.Parameter(torch.randn(1,config.hidden_size))
+
+                            self.vqa_key_aftattn = nn.Parameter(torch.randn(config.hidden_size))
+                            self.vqa_key_aftmlp = nn.Parameter(torch.randn(config.hidden_size))
+
+                            self.vqa_query_aftattn = nn.Parameter(torch.randn(1,config.hidden_size))
+                            self.vqa_query_aftmlp = nn.Parameter(torch.randn(1,config.hidden_size))
+
+                            self.sst2_key_aftattn = nn.Parameter(torch.randn(config.hidden_size))
+                            self.sst2_key_aftmlp = nn.Parameter(torch.randn(config.hidden_size))
+
+                            self.sst2_query_aftattn = nn.Parameter(torch.randn(1,config.hidden_size))
+                            self.sst2_query_aftmlp = nn.Parameter(torch.randn(1,config.hidden_size))
+
+                            if self.cur_dataset in ["vcr","commonsenseqa","places365","nlvr2"] and self.update_method == "task-incremental-update":
+                                self.add_query_aftattn = nn.Parameter(torch.randn(1,config.hidden_size))
+                                self.add_query_aftmlp = nn.Parameter(torch.randn(1,config.hidden_size))
+                                
+                                self.add_key_aftattn = nn.Parameter(torch.randn(config.hidden_size))
+                                self.add_key_aftmlp = nn.Parameter(torch.randn(config.hidden_size))
+                        else:
+                            raise NotImplementedError
+                else:
+                    self.sst2_adapter_aftattn = Adapter(embed_dim=config.hidden_size,
+                                            adapter_embed_dim=self.adapter_infos.adapter_embed_dim)
+                    self.sst2_adapter_aftmlp = Adapter(embed_dim=config.hidden_size,
+                                            adapter_embed_dim=self.adapter_infos.adapter_embed_dim)
             elif self.target_model == "self-update":
                 if self.cur_dataset in ["vcr","commonsenseqa","places365","nlvr2"] and self.update_method == "adapter":
                     self.add_query_aftattn = nn.Parameter(torch.randn(1,config.hidden_size))
@@ -1409,6 +1630,134 @@ class ViltLayer(nn.Module):
                                     self.ortho_loss += ortho_penalty(torch.cat([self.snlive_key_aftattn.view(1,-1),self.piqa_key_aftattn.view(1,-1), self.vqa_key_aftattn.view(1,-1)],dim=0)) * 0.1
                 else:
                     attention_output = self.vqa_adapter_aftattn(attention_output)
+            elif self.target_model == "sst2-update":
+                if self.update_method == "task-incremental-generalize" or self.update_method == "task-incremental-update" or self.update_method == "upstream-generalize":
+                    if self.continual_sequence == "multi-first":
+
+                        # snlive attn adapter and projection
+                        snlive_attn_adapter_output = self.snlive_adapter_aftattn(attention_output)
+                        snlive_attn_proj_output = snlive_attn_adapter_output
+                        # piqa attn adapter and projection
+                        piqa_attn_adapter_output = self.piqa_adapter_aftattn(attention_output)
+                        piqa_attn_proj_output = piqa_attn_adapter_output
+
+                        #iNaturalist attn adapter and projection
+                        iNaturalist_attn_adapter_output = self.iNaturalist_adapter_aftattn(attention_output)
+                        iNaturalist_attn_proj_output = iNaturalist_attn_adapter_output
+
+                        # vqa attn adapter and projection
+                        vqa_attn_adapter_output = self.vqa_adapter_aftattn(attention_output)
+                        vqa_attn_proj_output = vqa_attn_adapter_output
+
+                        # sst2 attn adapter and projection
+                        sst2_attn_adapter_output = self.sst2_adapter_aftattn(attention_output)
+                        sst2_attn_proj_output = sst2_attn_adapter_output
+
+                        # Cross-attention query, key, value
+                        snlive_attn_query = self.snlive_query_aftattn.expand(snlive_attn_proj_output.size(0),self.snlive_query_aftattn.size(0),self.snlive_query_aftattn.size(1))
+                        piqa_attn_query = self.piqa_query_aftattn.expand(piqa_attn_proj_output.size(0),self.piqa_query_aftattn.size(0),self.piqa_query_aftattn.size(1))
+                        iNaturalist_attn_query = self.iNaturalist_query_aftattn.expand(iNaturalist_attn_proj_output.size(0),self.iNaturalist_query_aftattn.size(0),self.iNaturalist_query_aftattn.size(1))
+                        vqa_attn_query = self.vqa_query_aftattn.expand(vqa_attn_proj_output.size(0),self.vqa_query_aftattn.size(0),self.vqa_query_aftattn.size(1))
+                        sst2_attn_query = self.sst2_query_aftattn.expand(sst2_attn_proj_output.size(0),self.sst2_query_aftattn.size(0),self.sst2_query_aftattn.size(1))
+                        snlive_attn_kv = torch.cat([snlive_attn_query,snlive_attn_proj_output],dim=1)
+                        piqa_attn_kv = torch.cat([piqa_attn_query,piqa_attn_proj_output],dim=1)
+                        iNaturalist_attn_kv = torch.cat([iNaturalist_attn_query,iNaturalist_attn_proj_output],dim=1)
+                        vqa_attn_kv = torch.cat([vqa_attn_query,vqa_attn_proj_output],dim=1)
+                        sst2_attn_kv = torch.cat([sst2_attn_query,sst2_attn_proj_output],dim=1)
+                        snlive_cross_attn_out = cross_attn_noproj(q=snlive_attn_query,k=snlive_attn_kv,v=snlive_attn_kv,num_heads=self.config.num_attention_heads)
+                        piqa_cross_attn_out = cross_attn_noproj(q=piqa_attn_query,k=piqa_attn_kv,v=piqa_attn_kv,num_heads=self.config.num_attention_heads)
+                        iNaturalist_cross_attn_out = cross_attn_noproj(q=iNaturalist_attn_query,k=iNaturalist_attn_kv,v=iNaturalist_attn_kv,num_heads=self.config.num_attention_heads)
+                        vqa_cross_attn_out = cross_attn_noproj(q=vqa_attn_query,k=vqa_attn_kv,v=vqa_attn_kv,num_heads=self.config.num_attention_heads)
+                        sst2_cross_attn_out = cross_attn_noproj(q=sst2_attn_query,k=sst2_attn_kv,v=sst2_attn_kv,num_heads=self.config.num_attention_heads)
+
+                        if self.cur_dataset in ["vcr","commonsenseqa","places365","nlvr2"] and self.update_method == "task-incremental-update":
+                            add_attn_adapter_output = self.add_adapter_aftattn(attention_output)
+                            add_attn_proj_output = add_attn_adapter_output
+                            add_attn_query = self.add_query_aftattn.expand(add_attn_proj_output.size(0),self.add_query_aftattn.size(0),self.add_query_aftattn.size(1))
+                            add_attn_kv = torch.cat([add_attn_query,add_attn_proj_output],dim=1)
+                            add_cross_attn_out = cross_attn_noproj(q=add_attn_query,k = add_attn_kv,v = add_attn_kv,num_heads=self.config.num_attention_heads)
+
+                        if self.adapter_weighted_method == "adapter-dimension-weighted":
+                            # compute cosine similarity
+                            snlive_n_K = nn.functional.normalize(self.snlive_key_aftattn,dim=0)
+                            piqa_n_K = nn.functional.normalize(self.piqa_key_aftattn,dim=0)
+                            iNaturalist_n_K = nn.functional.normalize(self.iNaturalist_key_aftattn,dim=0)
+                            vqa_n_K = nn.functional.normalize(self.vqa_key_aftattn,dim=0)
+                            sst2_n_K = nn.functional.normalize(self.sst2_key_aftattn,dim=0)
+
+                            norm_snlive_attn = nn.functional.normalize(snlive_cross_attn_out,dim=1)
+                            norm_piqa_attn = nn.functional.normalize(piqa_cross_attn_out,dim=1)
+                            norm_iNaturalist_attn = nn.functional.normalize(iNaturalist_cross_attn_out,dim=1)
+                            norm_vqa_attn = nn.functional.normalize(vqa_cross_attn_out,dim=1)
+                            norm_sst2_attn = nn.functional.normalize(sst2_cross_attn_out,dim=1)
+
+                            snlive_adapter_w = torch.einsum('bld,ld->bd',norm_snlive_attn,snlive_n_K)
+                            snlive_adapter_w = (snlive_adapter_w + 1) / 2
+
+                            piqa_adapter_w = torch.einsum('bld,ld->bd',norm_piqa_attn,piqa_n_K)
+                            piqa_adapter_w = (piqa_adapter_w + 1) / 2
+
+                            iNaturalist_adapter_w = torch.einsum('bld,ld->bd',norm_iNaturalist_attn,iNaturalist_n_K)
+                            iNaturalist_adapter_w = (iNaturalist_adapter_w + 1) / 2
+
+                            vqa_adapter_w = torch.einsum('bld,ld->bd',norm_vqa_attn,vqa_n_K)
+                            vqa_adapter_w = (vqa_adapter_w + 1) / 2
+
+                            sst2_adapter_w = torch.einsum('bld,ld->bd',norm_sst2_attn,sst2_n_K)
+                            sst2_adapter_w = (sst2_adapter_w + 1) / 2
+
+                            if self.cur_dataset in ["vcr","commonsenseqa","places365","nlvr2"] and self.update_method == "task-incremental-update":
+                                add_n_K = nn.functional.normalize(self.add_key_aftattn,dim=-1)
+                                add_norm_attn = nn.functional.normalize(add_cross_attn_out,dim=-1)
+                                add_adapter_w = torch.einsum('bd,d->b',add_norm_attn.squeeze(1),add_n_K)
+                                add_adapter_w = (add_adapter_w + 1) / 2
+                                attention_output = snlive_adapter_w.unsqueeze(1) * snlive_cross_attn_out + piqa_adapter_w.unsqueeze(1) * piqa_cross_attn_out + iNaturalist_adapter_w.unsqueeze(1) * iNaturalist_cross_attn_out + vqa_adapter_w.unsqueeze(1) * vqa_cross_attn_out + sst2_adapter_w.unsqueeze(1) * sst2_cross_attn_out + add_adapter_w.unsqueeze(1) * add_cross_attn_out
+                            else:
+                                attention_output = snlive_adapter_w.unsqueeze(1) * snlive_cross_attn_out + piqa_adapter_w.unsqueeze(1) * piqa_cross_attn_out + iNaturalist_adapter_w.unsqueeze(1) * iNaturalist_cross_attn_out + vqa_adapter_w.unsqueeze(1) * vqa_cross_attn_out + sst2_adapter_w.unsqueeze(1) * sst2_cross_attn_out
+                        elif self.adapter_weighted_method == "adapter-whole-weighted":
+                            snlive_n_K = nn.functional.normalize(self.snlive_key_aftattn,dim=-1)
+                            piqa_n_K = nn.functional.normalize(self.piqa_key_aftattn,dim=-1)
+                            iNaturalist_n_K = nn.functional.normalize(self.iNaturalist_key_aftattn,dim=-1)
+                            vqa_n_K = nn.functional.normalize(self.vqa_key_aftattn,dim=-1)
+                            sst2_n_K = nn.functional.normalize(self.sst2_key_aftattn,dim=-1)
+
+                            norm_snlive_attn = nn.functional.normalize(snlive_cross_attn_out,dim=-1)
+                            norm_piqa_attn = nn.functional.normalize(piqa_cross_attn_out,dim=-1)
+                            norm_iNaturalist_attn = nn.functional.normalize(iNaturalist_cross_attn_out,dim=-1)
+                            norm_vqa_attn = nn.functional.normalize(vqa_cross_attn_out,dim=-1)
+                            norm_sst2_attn = nn.functional.normalize(sst2_cross_attn_out,dim=-1)
+
+                            snlive_adapter_w = torch.einsum('bd,d->b',norm_snlive_attn.squeeze(1),snlive_n_K)
+                            snlive_adapter_w = (snlive_adapter_w + 1) / 2
+
+                            piqa_adapter_w = torch.einsum('bd,d->b',norm_piqa_attn.squeeze(1),piqa_n_K)
+                            piqa_adapter_w = (piqa_adapter_w + 1) / 2
+
+                            iNaturalist_adapter_w = torch.einsum('bd,d->b',norm_iNaturalist_attn.squeeze(1),iNaturalist_n_K)
+                            iNaturalist_adapter_w = (iNaturalist_adapter_w + 1) / 2
+
+                            vqa_adapter_w = torch.einsum('bd,d->b',norm_vqa_attn.squeeze(1),vqa_n_K)
+                            vqa_adapter_w = (vqa_adapter_w + 1) / 2
+
+                            sst2_adapter_w = torch.einsum('bd,d->b',norm_sst2_attn.squeeze(1),sst2_n_K)
+                            sst2_adapter_w = (sst2_adapter_w + 1) / 2
+
+                            if self.cur_dataset in ["vcr","commonsenseqa","places365","nlvr2"] and self.update_method == "task-incremental-update":
+                                add_n_K = nn.functional.normalize(self.add_key_aftattn,dim=-1)
+                                add_norm_attn = nn.functional.normalize(add_cross_attn_out,dim=-1)
+                                add_adapter_w = torch.einsum('bd,d->b',add_norm_attn.squeeze(1),add_n_K)
+                                add_adapter_w = (add_adapter_w + 1) / 2
+                                attention_output = snlive_adapter_w.unsqueeze(1) * snlive_cross_attn_out + piqa_adapter_w.unsqueeze(1) * piqa_cross_attn_out + iNaturalist_adapter_w.unsqueeze(1) * iNaturalist_cross_attn_out + vqa_adapter_w.unsqueeze(1) * vqa_cross_attn_out + sst2_adapter_w.unsqueeze(1) * sst2_cross_attn_out + add_adapter_w.unsqueeze(1) * add_cross_attn_out
+                            else:
+                                attention_output = snlive_adapter_w.unsqueeze(1) * snlive_cross_attn_out + piqa_adapter_w.unsqueeze(1) * piqa_cross_attn_out + iNaturalist_adapter_w.unsqueeze(1) * iNaturalist_cross_attn_out + vqa_adapter_w.unsqueeze(1) * vqa_cross_attn_out + sst2_adapter_w.unsqueeze(1) * sst2_cross_attn_out
+                        else:
+                            raise NotImplementedError
+                    else:
+                        # mono-first case - similar structure but with different adapter combinations
+                        # This would need to be implemented based on the specific mono-first logic
+                        attention_output = self.sst2_adapter_aftattn(attention_output)
+                else:
+                    attention_output = self.sst2_adapter_aftattn(attention_output)
             elif self.target_model == "self-update":
                 # adapter
                 if self.cur_dataset in ["vcr","commonsenseqa","places365","nlvr2"] and self.update_method == "adapter":
@@ -2092,6 +2441,145 @@ class ViltLayer(nn.Module):
                                     self.ortho_loss += ortho_penalty(torch.cat([self.snlive_key_aftmlp.view(1,-1),self.piqa_key_aftmlp.view(1,-1),self.vqa_key_aftmlp.view(1,-1)],dim=0)) * 0.1
                 else:
                     layer_output = self.vqa_adapter_aftmlp(layer_output)
+            elif self.target_model == "sst2-update":
+                if self.update_method == "task-incremental-generalize"  or self.update_method == "task-incremental-update" or self.update_method == "upstream-generalize":
+                    if self.continual_sequence=="multi-first":
+                        # Snlive adapter, projection
+                        snlive_mlp_adapter_output = self.snlive_adapter_aftmlp(layer_output)
+                        snlive_mlp_proj_output = snlive_mlp_adapter_output
+                        # Piqa adapter,projection
+                        piqa_mlp_adapter_output = self.piqa_adapter_aftmlp(layer_output)
+                        piqa_mlp_proj_output = piqa_mlp_adapter_output
+                        
+                        # iNaturalist adapter,projection
+                        iNaturalist_mlp_adapter_output = self.iNaturalist_adapter_aftmlp(layer_output)
+                        iNaturalist_mlp_proj_output = iNaturalist_mlp_adapter_output
+
+                        # Vqa adapter, projection
+                        vqa_mlp_adapter_output = self.vqa_adapter_aftmlp(layer_output)
+                        vqa_mlp_proj_output = vqa_mlp_adapter_output
+
+                        # SST-2 adapter, projection
+                        sst2_mlp_adapter_output = self.sst2_adapter_aftmlp(layer_output)
+                        sst2_mlp_proj_output = sst2_mlp_adapter_output
+
+                        # Cross-attention, query, key,value
+                        snlive_mlp_query = self.snlive_query_aftmlp.expand(snlive_mlp_proj_output.size(0),self.snlive_query_aftmlp.size(0),self.snlive_query_aftmlp.size(1))
+                        snlive_mlp_kv = torch.cat([snlive_mlp_query,snlive_mlp_proj_output],dim=1)
+                        snlive_cross_mlp_out = cross_attn_noproj(q=snlive_mlp_query,k=snlive_mlp_kv,v=snlive_mlp_kv,num_heads=self.config.num_attention_heads)
+
+                        piqa_mlp_query = self.piqa_query_aftmlp.expand(piqa_mlp_proj_output.size(0),self.piqa_query_aftmlp.size(0),self.piqa_query_aftmlp.size(1))
+                        piqa_mlp_kv = torch.cat([piqa_mlp_query,piqa_mlp_proj_output],dim=1)
+                        piqa_cross_mlp_out = cross_attn_noproj(q=piqa_mlp_query,k=piqa_mlp_kv,v=piqa_mlp_kv,num_heads=self.config.num_attention_heads)
+                        
+                        iNaturalist_mlp_query = self.iNaturalist_query_aftmlp.expand(iNaturalist_mlp_proj_output.size(0),self.iNaturalist_query_aftmlp.size(0),self.iNaturalist_query_aftmlp.size(1))
+                        iNaturalist_mlp_kv = torch.cat([iNaturalist_mlp_query,iNaturalist_mlp_proj_output],dim=1)
+                        iNaturalist_cross_mlp_out = cross_attn_noproj(q=iNaturalist_mlp_query,k=iNaturalist_mlp_kv,v=iNaturalist_mlp_kv,num_heads=self.config.num_attention_heads)
+
+                        vqa_mlp_query = self.vqa_query_aftmlp.expand(vqa_mlp_proj_output.size(0),self.vqa_query_aftmlp.size(0),self.vqa_query_aftmlp.size(1))
+                        vqa_mlp_kv = torch.cat([vqa_mlp_query,vqa_mlp_proj_output],dim=1)
+                        vqa_cross_mlp_out = cross_attn_noproj(q=vqa_mlp_query,k=vqa_mlp_kv,v=vqa_mlp_kv,num_heads=self.config.num_attention_heads)
+
+                        sst2_mlp_query = self.sst2_query_aftmlp.expand(sst2_mlp_proj_output.size(0),self.sst2_query_aftmlp.size(0),self.sst2_query_aftmlp.size(1))
+                        sst2_mlp_kv = torch.cat([sst2_mlp_query,sst2_mlp_proj_output],dim=1)
+                        sst2_cross_mlp_out = cross_attn_noproj(q=sst2_mlp_query,k=sst2_mlp_kv,v=sst2_mlp_kv,num_heads=self.config.num_attention_heads)
+
+                        if self.cur_dataset in ["vcr","commonsenseqa","places365","nlvr2"] and self.update_method == "task-incremental-update":
+                            add_mlp_adapter_output = self.add_adapter_aftmlp(layer_output)
+                            add_mlp_proj_output = add_mlp_adapter_output
+                            add_mlp_query = self.add_query_aftmlp.expand(add_mlp_proj_output.size(0),self.add_query_aftmlp.size(0),self.add_query_aftmlp.size(1))
+                            add_mlp_kv = torch.cat([add_mlp_query,add_mlp_proj_output],dim=1)
+                            add_cross_mlp_out = cross_attn_noproj(q=add_mlp_query,k=add_mlp_kv,v=add_mlp_kv,num_heads=self.config.num_attention_heads)
+
+                        if self.adapter_weighted_method == "adapter-dimension-weighted":
+                            # compute cosine similarity
+                            snlive_n_K = nn.functional.normalize(self.snlive_key_aftmlp,dim=0)
+                            piqa_n_K = nn.functional.normalize(self.piqa_key_aftmlp,dim=0)
+                            iNaturalist_n_K = nn.functional.normalize(self.iNaturalist_key_aftmlp,dim=0)
+                            vqa_n_K = nn.functional.normalize(self.vqa_key_aftmlp,dim=0)
+                            sst2_n_K = nn.functional.normalize(self.sst2_key_aftmlp,dim=0)
+
+                            norm_snlive_mlp = nn.functional.normalize(snlive_cross_mlp_out,dim=1)
+                            norm_piqa_mlp = nn.functional.normalize(piqa_cross_mlp_out,dim=1)
+                            norm_iNaturalist_mlp = nn.functional.normalize(iNaturalist_cross_mlp_out,dim=1)
+                            norm_vqa_mlp = nn.functional.normalize(vqa_cross_mlp_out,dim=1)
+                            norm_sst2_mlp = nn.functional.normalize(sst2_cross_mlp_out,dim=1)
+
+                            snlive_adapter_mlp_w = torch.einsum('bld,ld->bd',norm_snlive_mlp,snlive_n_K)
+                            snlive_adapter_mlp_w = (snlive_adapter_mlp_w + 1) / 2
+
+                            piqa_adapter_mlp_w = torch.einsum('bld,ld->bd',norm_piqa_mlp,piqa_n_K)
+                            piqa_adapter_mlp_w = (piqa_adapter_mlp_w + 1) / 2
+
+                            iNaturalist_adapter_mlp_w = torch.einsum('bld,ld->bd',norm_iNaturalist_mlp,iNaturalist_n_K)
+                            iNaturalist_adapter_mlp_w = (iNaturalist_adapter_mlp_w + 1) / 2
+
+                            vqa_adapter_mlp_w = torch.einsum('bld,ld->bd',norm_vqa_mlp,vqa_n_K)
+                            vqa_adapter_mlp_w = (vqa_adapter_mlp_w + 1) / 2
+
+                            sst2_adapter_mlp_w = torch.einsum('bld,ld->bd',norm_sst2_mlp,sst2_n_K)
+                            sst2_adapter_mlp_w = (sst2_adapter_mlp_w + 1) / 2
+
+                            if self.cur_dataset in ["vcr","commonsenseqa","places365","nlvr2"] and self.update_method == "task-incremental-update":
+                                add_mlp_n_K = nn.functional.normalize(self.add_key_aftmlp,dim=-1)
+                                add_norm_cross_mlp = nn.functional.normalize(add_cross_mlp_out,dim=-1)
+                                add_adapter_mlp_w = torch.einsum('bd,d->b',add_norm_cross_mlp.squeeze(1),add_mlp_n_K)
+                                add_adapter_mlp_w = (add_adapter_mlp_w + 1) / 2
+                                mlp_adapter_out = torch.einsum('bld,b->bld',snlive_mlp_proj_output,snlive_adapter_mlp_w) + torch.einsum('bld,b->bld',piqa_mlp_proj_output,piqa_adapter_mlp_w) + torch.einsum('bld,b->bld',iNaturalist_mlp_proj_output,iNaturalist_adapter_mlp_w) + torch.einsum('bld,b->bld',vqa_mlp_proj_output,vqa_adapter_mlp_w) + torch.einsum('bld,b->bld',sst2_mlp_proj_output,sst2_adapter_mlp_w) + torch.einsum('bld,b->bld',add_mlp_proj_output,add_adapter_mlp_w)
+                            else:
+                                mlp_adapter_out = torch.einsum('bld,b->bld',snlive_mlp_proj_output,snlive_adapter_mlp_w) + torch.einsum('bld,b->bld',piqa_mlp_proj_output,piqa_adapter_mlp_w) + torch.einsum('bld,b->bld',iNaturalist_mlp_proj_output,iNaturalist_adapter_mlp_w) + torch.einsum('bld,b->bld',vqa_mlp_proj_output,vqa_adapter_mlp_w) + torch.einsum('bld,b->bld',sst2_mlp_proj_output,sst2_adapter_mlp_w)
+                        elif self.adapter_weighted_method == "adapter-whole-weighted":
+                            snlive_n_K = nn.functional.normalize(self.snlive_key_aftmlp,dim=-1)
+                            piqa_n_K = nn.functional.normalize(self.piqa_key_aftmlp,dim=-1)
+                            iNaturalist_n_K = nn.functional.normalize(self.iNaturalist_key_aftmlp,dim=-1)
+                            vqa_n_K = nn.functional.normalize(self.vqa_key_aftmlp,dim=-1)
+                            sst2_n_K = nn.functional.normalize(self.sst2_key_aftmlp,dim=-1)
+
+                            norm_snlive_mlp = nn.functional.normalize(snlive_cross_mlp_out,dim=-1)
+                            norm_piqa_mlp = nn.functional.normalize(piqa_cross_mlp_out,dim=-1)
+                            norm_iNaturalist_mlp = nn.functional.normalize(iNaturalist_cross_mlp_out,dim=-1)
+                            norm_vqa_mlp = nn.functional.normalize(vqa_cross_mlp_out,dim=-1)
+                            norm_sst2_mlp = nn.functional.normalize(sst2_cross_mlp_out,dim=-1)
+
+                            snlive_adapter_mlp_w = torch.einsum('bd,d->b',norm_snlive_mlp.squeeze(1),snlive_n_K)
+                            snlive_adapter_mlp_w = (snlive_adapter_mlp_w + 1) / 2
+
+                            piqa_adapter_mlp_w = torch.einsum('bd,d->b',norm_piqa_mlp.squeeze(1),piqa_n_K)
+                            piqa_adapter_mlp_w = (piqa_adapter_mlp_w + 1) / 2
+
+                            iNaturalist_adapter_mlp_w = torch.einsum('bd,d->b',norm_iNaturalist_mlp.squeeze(1),iNaturalist_n_K)
+                            iNaturalist_adapter_mlp_w = (iNaturalist_adapter_mlp_w + 1) / 2
+
+                            vqa_adapter_mlp_w = torch.einsum('bd,d->b',norm_vqa_mlp.squeeze(1),vqa_n_K)
+                            vqa_adapter_mlp_w = (vqa_adapter_mlp_w + 1) / 2
+
+                            sst2_adapter_mlp_w = torch.einsum('bd,d->b',norm_sst2_mlp.squeeze(1),sst2_n_K)
+                            sst2_adapter_mlp_w = (sst2_adapter_mlp_w + 1) / 2
+
+                            if self.cur_dataset in ["vcr","commonsenseqa","places365","nlvr2"] and self.update_method == "task-incremental-update":
+                                add_mlp_n_K = nn.functional.normalize(self.add_key_aftmlp,dim=-1)
+                                add_norm_cross_mlp = nn.functional.normalize(add_cross_mlp_out,dim=-1)
+                                add_adapter_mlp_w = torch.einsum('bd,d->b',add_norm_cross_mlp.squeeze(1),add_mlp_n_K)
+                                add_adapter_mlp_w = (add_adapter_mlp_w + 1) / 2
+                                mlp_adapter_out = torch.einsum('bld,b->bld',snlive_mlp_proj_output,snlive_adapter_mlp_w) + torch.einsum('bld,b->bld',piqa_mlp_proj_output,piqa_adapter_mlp_w) + torch.einsum('bld,b->bld',iNaturalist_mlp_proj_output,iNaturalist_adapter_mlp_w) + torch.einsum('bld,b->bld',vqa_mlp_proj_output,vqa_adapter_mlp_w) + torch.einsum('bld,b->bld',sst2_mlp_proj_output,sst2_adapter_mlp_w) + torch.einsum('bld,b->bld',add_mlp_proj_output,add_adapter_mlp_w)
+                            else:
+                                mlp_adapter_out = torch.einsum('bld,b->bld',snlive_mlp_proj_output,snlive_adapter_mlp_w) + torch.einsum('bld,b->bld',piqa_mlp_proj_output,piqa_adapter_mlp_w) + torch.einsum('bld,b->bld',iNaturalist_mlp_proj_output,iNaturalist_adapter_mlp_w) + torch.einsum('bld,b->bld',vqa_mlp_proj_output,vqa_adapter_mlp_w) + torch.einsum('bld,b->bld',sst2_mlp_proj_output,sst2_adapter_mlp_w)
+                        layer_output = mlp_adapter_out
+                        # Orthogonal loss
+                        if self.training:
+                            if self.cur_dataset in ["vcr","commonsenseqa","places365","nlvr2"] and self.update_method == "task-incremental-update":
+                                # query ortho loss
+                                self.ortho_loss += ortho_penalty(torch.cat([self.snlive_query_aftmlp.view(1,-1),self.piqa_query_aftmlp.view(1,-1),self.iNaturalist_query_aftmlp.view(1,-1),self.vqa_query_aftmlp.view(1,-1),self.sst2_query_aftmlp.view(1,-1),self.add_query_aftmlp.view(1,-1)],dim=0)) * 0.1 # orthogonal coefficient
+                                # key ortho loss
+                                self.ortho_loss += ortho_penalty(torch.cat([self.snlive_key_aftmlp.view(1,-1),self.piqa_key_aftmlp.view(1,-1),self.iNaturalist_key_aftmlp.view(1,-1),self.vqa_key_aftmlp.view(1,-1),self.sst2_key_aftmlp.view(1,-1),self.add_key_aftmlp.view(1,-1)],dim=0)) * 0.1
+                            else:
+                                # query ortho loss
+                                self.ortho_loss += ortho_penalty(torch.cat([self.snlive_query_aftmlp.view(1,-1),self.piqa_query_aftmlp.view(1,-1),self.iNaturalist_query_aftmlp.view(1,-1),self.vqa_query_aftmlp.view(1,-1),self.sst2_query_aftmlp.view(1,-1)],dim=0)) * 0.1 # orthogonal coefficient
+                                if self.update_method == "task-incremental-update":
+                                    # key ortho loss
+                                    self.ortho_loss += ortho_penalty(torch.cat([self.snlive_key_aftmlp.view(1,-1),self.piqa_key_aftmlp.view(1,-1),self.iNaturalist_key_aftmlp.view(1,-1),self.vqa_key_aftmlp.view(1,-1),self.sst2_key_aftmlp.view(1,-1)],dim=0)) * 0.1
+                else:
+                    layer_output = self.sst2_adapter_aftmlp(layer_output)
             elif self.target_model == "self-update":
                 if self.cur_dataset in ["vcr","commonsenseqa","places365","nlvr2"] and self.update_method == "adapter":
                     add_mlp_adapter_output = self.add_adapter_aftmlp(layer_output)

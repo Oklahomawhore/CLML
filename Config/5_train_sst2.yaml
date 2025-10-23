@@ -1,0 +1,64 @@
+_target_: definitions.MMCLArguments
+
+training:
+  _target_: definitions.TrainingArguments
+  target_model: "sst2-update"
+  cur_dataset: "sst2"
+  cur_expt_name: "task_cl" 
+  adapter_weighted_method: "adapter-whole-weighted"
+  initialize_from_checkpoint: None
+  resume_from_checkpoint: None
+  continual_sequence: multi-first
+  lightning:
+    max_epochs: 20
+    accelerator: gpu
+    devices: [0] # Note
+    enable_progress_bar: True
+    val_check_interval: 0.25
+    num_sanity_val_steps: 0
+    strategy: ddp_find_unused_parameters_true
+    precision: 16
+    default_root_dir: "Checkpoint"  
+  seed: 1
+  learning_rate: 0.0005
+  lr_end: 1e-7
+  adam_eps: 1e-4
+  adam_weight_decay: 0.01
+  adam_betas:
+  - 0.9
+  - 0.98
+  warmup_ratio: 0.1
+
+datasets:
+  _target_: definitions.TrainingDatasetsInfo
+  selected: 
+  - text
+  text:
+    data_dir: "/data/wangshu/wangshu_code/lihong_workspace/Data"
+    low_shot_config: 
+      key: False
+      num_low_shot: 2048
+    batch_size: 128
+    test_batch_size: 128
+    num_workers: 4  
+    allow_uneven_batches: True 
+    datamodule_extra_kwargs: {}
+
+model:
+  _target_: definitions.ModelArguments
+  key: "VILT"
+  num_classes: 2
+  classifier_in_dim: 768
+  update_method: "task-incremental-update" 
+  VILT_ckpt_dir: "/data/wangshu/wangshu_code/lihong_workspace/Checkpoint"
+  VILT_tokenizer: "/data/wangshu/wangshu_code/lihong_workspace/Checkpoint/vilt"
+  cl_setting:
+    key: "none"
+    ewc_fisher_sample_percentage: 0.01
+    ewc_loss_weight: 100.0
+    save_task_parameters: False
+  adapter:
+    adapter_infos:
+      key: True      
+      adapter_embed_dim: 48
+

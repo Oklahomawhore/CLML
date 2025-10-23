@@ -16,7 +16,8 @@ from Data import (SnliveDataModule,
                   PIQADataModule,
                   CommonsenseQADataModule,
                   iNaturalistDataModule,
-                  Places365DataModule)
+                  Places365DataModule,
+                  SST2DataModule)
 from pytorch_lightning.callbacks import (LearningRateMonitor,
                                          ModelCheckpoint)
 from Model import VILTLightningModule
@@ -100,6 +101,14 @@ def main():
                                                **build_datamodule_kwargs(config.datasets.image))
         batch_size = config.datasets.image.batch_size
     
+    elif config.training.cur_dataset == "sst2":
+        datamodule = SST2DataModule(low_shot_config = config.datasets.text.low_shot_config,
+                                    model_key = config.model.key,
+                                    VILT_ckpt_dir=config.model.VILT_ckpt_dir,
+                                    VILT_tokenizer = config.model.VILT_tokenizer,
+                                    **build_datamodule_kwargs(config.datasets.text))
+        batch_size = config.datasets.text.batch_size
+    
     else:
         raise NotImplementedError
     
@@ -127,8 +136,8 @@ def main():
                                 cl_setting = config.model.cl_setting,
                                 adapter=config.model.adapter
                                 )
-    
-    
+
+    print(">>>>>>",model.debug_print_params)
     callbacks = [
         LearningRateMonitor(logging_interval="step"),
         ModelCheckpoint(dirpath=os.path.join(config.training.lightning.default_root_dir,config.training.cur_expt_name,"checkpoint"), # directory to save the model file.

@@ -417,3 +417,55 @@ class SnliveDataModule(LightningDataModule):
                                            pin_memory=True,
                                            collate_fn = lambda x:collate_fn(x)
                                            )
+
+
+class SST2DataModule(LightningDataModule):
+    def __init__(self,
+                 low_shot_config:LowShotConfig,
+                 model_key:str,
+                 VILT_ckpt_dir:str,
+                 VILT_tokenizer:str,
+                 data_dir:str,
+                 batch_size:int,
+                 num_workers:int,
+                 allow_uneven_batches:bool=True,
+                 **kwargs:Any):
+        super().__init__()
+        self.low_shot_config = low_shot_config
+        self.model_key = model_key
+        self.VILT_ckpt_dir = VILT_ckpt_dir
+        self.VILT_tokenizer = VILT_tokenizer
+        self.data_dir = data_dir
+        self.batch_size = batch_size
+        self.num_workers = num_workers
+        self.allow_uneven_batches = allow_uneven_batches
+        
+    def setup(self,stage=None):
+        from Data.language_datasets.sst2_dataset import SST2_Dataset_VILT
+        self.train_dataset = SST2_Dataset_VILT(VILT_ckpt_dir=self.VILT_ckpt_dir,
+                                              VILT_tokenizer=self.VILT_tokenizer,
+                                              data_dir=self.data_dir,
+                                              split="train",
+                                              low_shot_config=self.low_shot_config)
+        self.val_dataset = SST2_Dataset_VILT(VILT_ckpt_dir=self.VILT_ckpt_dir,
+                                             VILT_tokenizer=self.VILT_tokenizer,
+                                             data_dir=self.data_dir,
+                                             split="val",
+                                             low_shot_config=self.low_shot_config)
+        
+    def train_dataloader(self):
+        collate_fn = self.train_dataset.sst2_batch_collate
+        return torch.utils.data.DataLoader(dataset = self.train_dataset,
+                                           batch_size = self.batch_size,
+                                           num_workers = self.num_workers,
+                                           shuffle = True,
+                                           pin_memory=True,
+                                           collate_fn = lambda x:collate_fn(x))
+    def val_dataloader(self):
+        collate_fn = self.val_dataset.sst2_batch_collate
+        return torch.utils.data.DataLoader(dataset = self.val_dataset,
+                                           batch_size = self.batch_size,
+                                           num_workers = self.num_workers,
+                                           shuffle = False,
+                                           pin_memory=True,
+                                           collate_fn = lambda x:collate_fn(x))
