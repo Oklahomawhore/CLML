@@ -4,7 +4,7 @@ training:
   _target_: definitions.TrainingArguments
   target_model: "iNaturalist-update"
   cur_dataset: "iNaturalist"
-  cur_expt_name: "task_cl" 
+  cur_expt_name: "inat_cl" 
   adapter_weighted_method: "adapter-whole-weighted"
   initialize_from_checkpoint: None
   resume_from_checkpoint: None
@@ -32,8 +32,8 @@ training:
 datasets:
   _target_: definitions.TrainingDatasetsInfo
   selected: 
-  - vl
-  vl:
+  - image
+  image:
     data_dir: "/data/wangshu/wangshu_code/lihong_workspace/Data"
     low_shot_config: 
       key: False
@@ -47,7 +47,7 @@ datasets:
 model:
   _target_: definitions.ModelArguments
   key: "VILT"
-  num_classes: 3
+  num_classes: 1010
   classifier_in_dim: 768
   update_method: "task-incremental-generalize" 
   VILT_ckpt_dir: "/data/wangshu/wangshu_code/lihong_workspace/Checkpoint"
@@ -61,4 +61,5 @@ model:
     adapter_infos:
       key: True      
       adapter_embed_dim: 48
-
+  perceiver:
+    key: False

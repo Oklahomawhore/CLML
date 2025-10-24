@@ -73,6 +73,10 @@ class TrainingArguments:
     adam_weight_decay:float = 0.01
     adam_betas: Tuple[float,float] = field(default_factory=lambda:(0.9,0.999))
     warmup_ratio:float = 0.1
+    # UML parameters
+    use_uml: bool = False
+    uml_alpha: float = 1.0
+    helper_num_shots: int = 16
     
 
 @dataclass
@@ -103,6 +107,11 @@ class CL_setting:
     ewc_loss_weight: float = 100.0
     save_task_parameters:bool = False
 
+
+@dataclass
+class Perceiver:
+    key: bool = False
+
 @dataclass
 class ModelArguments:
     key: str = "CLIP"
@@ -114,6 +123,9 @@ class ModelArguments:
     update_method:str = "cls-head"
     cl_setting:Optional[CL_setting] = None
     adapter: Optional[Adapter] = None
+    perceiver: Optional[Perceiver] = None
+
+
 
 @dataclass
 class MMCLArguments:

@@ -23,13 +23,14 @@ class ViltEncoder(nn.Module):
                  continual_sequence,
                  cur_dataset,
                  update_method,
-                 adapter):
+                 adapter,
+                 perceiver=None):
         super().__init__()
         self.config = config
 
         self.ortho_loss = 0.
 
-        self.layer = nn.ModuleList([ViltLayer(config,target_model, adapter_weighted_method,continual_sequence,cur_dataset,update_method,adapter.adapter_infos) for _ in range(config.num_hidden_layers)])
+        self.layer = nn.ModuleList([ViltLayer(config,target_model, adapter_weighted_method,continual_sequence,cur_dataset,update_method,adapter.adapter_infos, perceiver) for _ in range(config.num_hidden_layers)])
         self.gradient_checkpointing = False
 
     def forward(
@@ -98,7 +99,7 @@ class ViltLayer(nn.Module):
                  continual_sequence,
                  cur_dataset,
                  update_method,
-                 adapter_infos:Adapter_infos):
+                 adapter_infos:Adapter_infos, perceiver=None):
         super().__init__()
         self.config = config
         self.target_model = target_model
@@ -107,6 +108,7 @@ class ViltLayer(nn.Module):
         self.cur_dataset = cur_dataset
         self.update_method = update_method
         self.adapter_infos = adapter_infos
+        self.perceiver = perceiver
         self.chunk_size_feed_forward = config.chunk_size_feed_forward
         self.seq_len_dim = 1
         self.attention = ViltAttention(config)
@@ -127,7 +129,7 @@ class ViltLayer(nn.Module):
                                             adapter_embed_dim=self.adapter_infos.adapter_embed_dim)
                         self.snlive_adapter_aftmlp = Adapter(embed_dim=config.hidden_size,
                                                 adapter_embed_dim=self.adapter_infos.adapter_embed_dim)
-                        if self.cur_dataset in ["vcr","commonsenseqa","places365","nlvr2"] and self.update_method == "task-incremental-update":
+                        if self.cur_dataset in ["vcr","commonsenseqa","places365","nlvr2","sst2"] and self.update_method == "task-incremental-update":
                             self.add_adapter_aftattn = Adapter(embed_dim=config.hidden_size,
                                                 adapter_embed_dim=self.adapter_infos.adapter_embed_dim)
                             self.add_adapter_aftmlp = Adapter(embed_dim=config.hidden_size,
@@ -167,7 +169,7 @@ class ViltLayer(nn.Module):
                         self.piqa_adapter_aftmlp = Adapter(embed_dim=config.hidden_size,
                                                 adapter_embed_dim=self.adapter_infos.adapter_embed_dim)
 
-                        if self.cur_dataset in ["vcr","commonsenseqa","places365","nlvr2"] and self.update_method == "task-incremental-update":
+                        if self.cur_dataset in ["vcr","commonsenseqa","places365","nlvr2","sst2"] and self.update_method == "task-incremental-update":
                             self.add_adapter_aftattn = Adapter(embed_dim=config.hidden_size,
                                                 adapter_embed_dim=self.adapter_infos.adapter_embed_dim)
                             self.add_adapter_aftmlp = Adapter(embed_dim=config.hidden_size,
@@ -239,7 +241,7 @@ class ViltLayer(nn.Module):
                         self.piqa_adapter_aftmlp = Adapter(embed_dim=config.hidden_size,
                                                 adapter_embed_dim=self.adapter_infos.adapter_embed_dim)
 
-                        if self.cur_dataset in ["vcr","commonsenseqa","places365","nlvr2"] and self.update_method == "task-incremental-update":
+                        if self.cur_dataset in ["vcr","commonsenseqa","places365","nlvr2","sst2"] and self.update_method == "task-incremental-update":
                             self.add_adapter_aftattn = Adapter(embed_dim=config.hidden_size,
                                                 adapter_embed_dim=self.adapter_infos.adapter_embed_dim)
                             self.add_adapter_aftmlp = Adapter(embed_dim=config.hidden_size,

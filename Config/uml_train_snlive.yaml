@@ -4,7 +4,7 @@ training:
   _target_: definitions.TrainingArguments
   target_model: "snlive-update"
   cur_dataset: "snlive"
-  cur_expt_name: "task_cl" 
+  cur_expt_name: "uml_task_cl" 
   adapter_weighted_method: "adapter-whole-weighted"
   initialize_from_checkpoint: None
   resume_from_checkpoint: None
@@ -28,6 +28,10 @@ training:
   - 0.9
   - 0.98
   warmup_ratio: 0.1
+  # UML parameters
+  use_uml: True
+  uml_alpha: 1.0
+  helper_num_shots: 16
 
 datasets:
   _target_: definitions.TrainingDatasetsInfo
@@ -61,5 +65,7 @@ model:
     adapter_infos:
       key: True      
       adapter_embed_dim: 48
-  perceiver:
-    key: False
+
+
+
+

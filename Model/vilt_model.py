@@ -33,7 +33,11 @@ class VILTLightningModule(LightningModule):
                 cur_dataset:str = None,
                 cl_setting:Optional[CL_setting] = None,
                 adapter:Optional[Adapter] = Adapter(Vision_adapter_infos(False,256),
-                                                    Text_adapter_infos(False,256))
+                                                    Text_adapter_infos(False,256)),
+                # UML parameters
+                use_uml: bool = False,
+                uml_alpha: float = 1.0,
+                perceiver=None
                 ):
         super().__init__()
         # debug flag: set environment variable DEBUG_PRINT_PARAMS=1 to enable
@@ -44,6 +48,10 @@ class VILTLightningModule(LightningModule):
         self.update_method = update_method
         self.cl_setting = cl_setting
         self.init_checkpoint_path = init_checkpoint_path
+        # UML settings
+        self.use_uml = use_uml
+        self.uml_alpha = uml_alpha
+        self.helper_loader_iter = None
         self.VILT = VILT_model(VILT_ckpt_dir=VILT_ckpt_dir,
                                classifier_in_dim=classifier_in_dim,
                                num_classes=num_classes,
@@ -52,7 +60,8 @@ class VILTLightningModule(LightningModule):
                                continual_sequence =continual_sequence,
                                cur_dataset=cur_dataset,
                                update_method=update_method,
-                               adapter=adapter)
+                               adapter=adapter,
+                               perceiver=perceiver)
                 
         self.VILT_ckpt_dir = VILT_ckpt_dir
         self.load_vilt_state_dict()
@@ -75,7 +84,7 @@ class VILTLightningModule(LightningModule):
     
     def load_vilt_state_dict(self):
         if self.init_checkpoint_path != "None":
-            state_dict = torch.load(self.init_checkpoint_path)["state_dict"]
+            state_dict = torch.load(self.init_checkpoint_path, weights_only=False)["state_dict"]
             self.load_state_dict(state_dict,strict=False)
             
         else:
@@ -109,7 +118,74 @@ class VILTLightningModule(LightningModule):
                 print("   ... (truncated)")
     
     def training_step(self,batch,batch_idx):
-        loss,accuracy = self._step(batch,batch_idx)
+        if self.use_uml:
+            # UML training: combine target and helper modality losses
+            # Target modality loss
+            target_loss, target_accuracy = self._step(batch, batch_idx)
+            
+            # Helper modality loss
+            # Get helper batch from the helper loader iterator
+            if self.helper_loader_iter is None:
+                # Initialize helper loader iterator on first use
+                # The helper loader is stored in the trainer
+                pass  # Will be set externally
+            
+            try:
+                helper_batch = next(self.helper_loader_iter)
+            except (StopIteration, AttributeError):
+                # Reset iterator when exhausted or not initialized
+                if hasattr(self.trainer, 'helper_loader'):
+                    self.helper_loader_iter = iter(self.trainer.helper_loader)
+                    helper_batch = next(self.helper_loader_iter)
+                else:
+                    # Fallback: no helper batch available, use only target
+                    helper_loss = torch.tensor(0.0, device=target_loss.device)
+                    helper_batch = None
+            
+            if helper_batch is not None:
+                # Move helper batch to the same device
+                helper_batch = {
+                    'encodings': {k: v.to(self.device) for k, v in helper_batch['encodings'].items()},
+                    'labels': helper_batch['labels'].to(self.device)
+                }
+                helper_loss, helper_accuracy = self._step(helper_batch, batch_idx)
+                
+                # Log helper modality metrics
+                self.log("train_helper_loss",
+                        helper_loss,
+                        prog_bar=True,
+                        logger=True,
+                        on_step=True,
+                        sync_dist=True,
+                        batch_size=self.batch_size)
+                self.log("train_helper_acc",
+                        helper_accuracy,
+                        prog_bar=False,
+                        logger=True,
+                        on_step=False,
+                        on_epoch=True,
+                        sync_dist=True,
+                        batch_size=self.batch_size)
+            else:
+                helper_loss = torch.tensor(0.0, device=target_loss.device)
+                helper_accuracy = torch.tensor(0.0, device=target_loss.device)
+            
+            # Combine losses: L = L_target + alpha * L_helper
+            loss = target_loss + self.uml_alpha * helper_loss
+            accuracy = target_accuracy  # Report target accuracy
+            
+            # Log combined and target metrics
+            self.log("train_target_loss",
+                    target_loss,
+                    prog_bar=True,
+                    logger=True,
+                    on_step=True,
+                    sync_dist=True,
+                    batch_size=self.batch_size)
+        else:
+            # Standard training without UML
+            loss, accuracy = self._step(batch, batch_idx)
+        
         # debug: check which selected parameters participate in the loss graph
         if getattr(self, 'debug_print_params', False):
             try:
@@ -119,6 +195,7 @@ class VILTLightningModule(LightningModule):
                 self._debug_param_usage(loss)
             except Exception as e:
                 print(f"[DEBUG] Exception while checking param usage: {e}")
+        
         self.log("train_losses",
                 loss,
                 prog_bar=True,

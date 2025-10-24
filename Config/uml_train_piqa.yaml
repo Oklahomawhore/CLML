@@ -2,17 +2,17 @@ _target_: definitions.MMCLArguments
 
 training:
   _target_: definitions.TrainingArguments
-  target_model: "snlive-update"
-  cur_dataset: "snlive"
-  cur_expt_name: "task_cl" 
+  target_model: "piqa-update"
+  cur_dataset: "piqa"
+  cur_expt_name: "uml_piqa_cl" 
   adapter_weighted_method: "adapter-whole-weighted"
   initialize_from_checkpoint: None
   resume_from_checkpoint: None
-  continual_sequence: multi-first
+  continual_sequence: text-first
   lightning:
     max_epochs: 20
     accelerator: gpu
-    devices: [0] # Note
+    devices: [0]
     enable_progress_bar: True
     val_check_interval: 0.25
     num_sanity_val_steps: 0
@@ -28,12 +28,16 @@ training:
   - 0.9
   - 0.98
   warmup_ratio: 0.1
+  # UML parameters
+  use_uml: True
+  uml_alpha: 1.0
+  helper_num_shots: 16
 
 datasets:
   _target_: definitions.TrainingDatasetsInfo
   selected: 
-  - vl
-  vl:
+  - text
+  text:
     data_dir: "/data/wangshu/wangshu_code/lihong_workspace/Data"
     low_shot_config: 
       key: False
@@ -47,7 +51,7 @@ datasets:
 model:
   _target_: definitions.ModelArguments
   key: "VILT"
-  num_classes: 3
+  num_classes: 2
   classifier_in_dim: 768
   update_method: "task-incremental-generalize" 
   VILT_ckpt_dir: "/data/wangshu/wangshu_code/lihong_workspace/Checkpoint"
@@ -61,5 +65,7 @@ model:
     adapter_infos:
       key: True      
       adapter_embed_dim: 48
-  perceiver:
-    key: False
+
+
+
+

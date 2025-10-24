@@ -4,7 +4,7 @@ training:
   _target_: definitions.TrainingArguments
   target_model: "sst2-update"
   cur_dataset: "sst2"
-  cur_expt_name: "task_cl" 
+  cur_expt_name: "sst2_cl" 
   adapter_weighted_method: "adapter-whole-weighted"
   initialize_from_checkpoint: None
   resume_from_checkpoint: None
@@ -61,4 +61,5 @@ model:
     adapter_infos:
       key: True      
       adapter_embed_dim: 48
-
+  perceiver:
+    key: False

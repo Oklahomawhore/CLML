@@ -182,7 +182,8 @@ class ViltModel(ViltPreTrainedModel):
                  continual_sequence:str = None,
                  cur_dataset:str="",
                  update_method:str=None,
-                 adapter:Optional[Adapter] = None
+                 adapter:Optional[Adapter] = None,
+                 perceiver=None
                  ):
         super().__init__(config)
         self.config = config
@@ -194,7 +195,8 @@ class ViltModel(ViltPreTrainedModel):
                                    continual_sequence = continual_sequence,
                                    cur_dataset=cur_dataset,
                                    update_method=update_method,
-                                   adapter=adapter)
+                                   adapter=adapter,
+                                   perceiver=perceiver)
 
         self.layernorm = nn.LayerNorm(config.hidden_size, eps=config.layer_norm_eps)
         self.pooler = ViltPooler(config) if add_pooling_layer else None

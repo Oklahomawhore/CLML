@@ -20,7 +20,8 @@ class VILT_model(nn.Module):
                  continual_sequence:str,
                  cur_dataset:str,
                  update_method:str,
-                 adapter:Optional[Adapter]=None
+                 adapter:Optional[Adapter]=None,
+                 perceiver=None
                  ):
         super().__init__()
         self.VILT_ckpt_dir = VILT_ckpt_dir
@@ -33,7 +34,8 @@ class VILT_model(nn.Module):
                               continual_sequence = continual_sequence,
                               cur_dataset=self.cur_dataset,
                               update_method=update_method,
-                              adapter=adapter)
+                              adapter=adapter,
+                              perceiver=perceiver)
         if self.cur_dataset in ["piqa"]: # multi-label
             self.piqa_classifier = MLP(in_dim=classifier_in_dim,
                                 out_dim=1,

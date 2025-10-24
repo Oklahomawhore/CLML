@@ -2,17 +2,17 @@ _target_: definitions.MMCLArguments
 
 training:
   _target_: definitions.TrainingArguments
-  target_model: "snlive-update"
-  cur_dataset: "snlive"
-  cur_expt_name: "task_cl" 
+  target_model: "iNaturalist-update"
+  cur_dataset: "iNaturalist"
+  cur_expt_name: "uml_inat_cl" 
   adapter_weighted_method: "adapter-whole-weighted"
   initialize_from_checkpoint: None
   resume_from_checkpoint: None
-  continual_sequence: multi-first
+  continual_sequence: image-first
   lightning:
     max_epochs: 20
     accelerator: gpu
-    devices: [0] # Note
+    devices: [0]
     enable_progress_bar: True
     val_check_interval: 0.25
     num_sanity_val_steps: 0
@@ -28,18 +28,22 @@ training:
   - 0.9
   - 0.98
   warmup_ratio: 0.1
+  # UML parameters
+  use_uml: True
+  uml_alpha: 1.0
+  helper_num_shots: 16
 
 datasets:
   _target_: definitions.TrainingDatasetsInfo
   selected: 
-  - vl
-  vl:
+  - image
+  image:
     data_dir: "/data/wangshu/wangshu_code/lihong_workspace/Data"
     low_shot_config: 
       key: False
       num_low_shot: 2048
-    batch_size: 128
-    test_batch_size: 128
+    batch_size: 64
+    test_batch_size: 64
     num_workers: 4  
     allow_uneven_batches: True 
     datamodule_extra_kwargs: {}
@@ -47,7 +51,7 @@ datasets:
 model:
   _target_: definitions.ModelArguments
   key: "VILT"
-  num_classes: 3
+  num_classes: 1010
   classifier_in_dim: 768
   update_method: "task-incremental-generalize" 
   VILT_ckpt_dir: "/data/wangshu/wangshu_code/lihong_workspace/Checkpoint"
@@ -61,5 +65,7 @@ model:
     adapter_infos:
       key: True      
       adapter_embed_dim: 48
-  perceiver:
-    key: False
+
+
+
+

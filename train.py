@@ -17,7 +17,13 @@ from Data import (SnliveDataModule,
                   CommonsenseQADataModule,
                   iNaturalistDataModule,
                   Places365DataModule,
-                  SST2DataModule)
+                  SST2DataModule,
+                  UML_SnliveDataModule,
+                  UML_VQADataModule,
+                  UML_PIQADataModule,
+                  UML_iNaturalistDataModule,
+                  UML_Places365DataModule,
+                  UML_SST2DataModule)
 from pytorch_lightning.callbacks import (LearningRateMonitor,
                                          ModelCheckpoint)
 from Model import VILTLightningModule
@@ -39,20 +45,41 @@ def main():
                           version=config.training.cur_expt_name,)
     logger = logging.getLogger(__name__)
     
+    # Check if UML mode is enabled
+    use_uml = getattr(config.training, 'use_uml', False)
+    uml_alpha = getattr(config.training, 'uml_alpha', 1.0)
+    helper_num_shots = getattr(config.training, 'helper_num_shots', 16)
+    
     # Load dataset
     if config.training.cur_dataset == "snlive":
-        datamodule = SnliveDataModule(low_shot_config = config.datasets.vl.low_shot_config,
-                                      model_key = config.model.key, ##
-                                      VILT_ckpt_dir=config.model.VILT_ckpt_dir,
-                                      VILT_tokenizer = config.model.VILT_tokenizer,
-                                      **build_datamodule_kwargs(config.datasets.vl))
+        if use_uml:
+            datamodule = UML_SnliveDataModule(low_shot_config = config.datasets.vl.low_shot_config,
+                                          model_key = config.model.key,
+                                          VILT_ckpt_dir=config.model.VILT_ckpt_dir,
+                                          VILT_tokenizer = config.model.VILT_tokenizer,
+                                          helper_num_shots=helper_num_shots,
+                                          **build_datamodule_kwargs(config.datasets.vl))
+        else:
+            datamodule = SnliveDataModule(low_shot_config = config.datasets.vl.low_shot_config,
+                                          model_key = config.model.key, ##
+                                          VILT_ckpt_dir=config.model.VILT_ckpt_dir,
+                                          VILT_tokenizer = config.model.VILT_tokenizer,
+                                          **build_datamodule_kwargs(config.datasets.vl))
         batch_size = config.datasets.vl.batch_size
     elif config.training.cur_dataset == "vqa":
-        datamodule = VQADataModule(low_shot_config = config.datasets.vl.low_shot_config,
-                                   model_key = config.model.key,
-                                    VILT_ckpt_dir=config.model.VILT_ckpt_dir,
-                                    VILT_tokenizer = config.model.VILT_tokenizer,
-                                   **build_datamodule_kwargs(config.datasets.vl))
+        if use_uml:
+            datamodule = UML_VQADataModule(low_shot_config = config.datasets.vl.low_shot_config,
+                                       model_key = config.model.key,
+                                        VILT_ckpt_dir=config.model.VILT_ckpt_dir,
+                                        VILT_tokenizer = config.model.VILT_tokenizer,
+                                        helper_num_shots=helper_num_shots,
+                                       **build_datamodule_kwargs(config.datasets.vl))
+        else:
+            datamodule = VQADataModule(low_shot_config = config.datasets.vl.low_shot_config,
+                                       model_key = config.model.key,
+                                        VILT_ckpt_dir=config.model.VILT_ckpt_dir,
+                                        VILT_tokenizer = config.model.VILT_tokenizer,
+                                       **build_datamodule_kwargs(config.datasets.vl))
         batch_size = config.datasets.vl.batch_size
     elif config.training.cur_dataset == "vcr":
         datamodule = VCRDataModule(low_shot_config = config.datasets.vl.low_shot_config,
@@ -71,11 +98,19 @@ def main():
         batch_size = config.datasets.vl.batch_size
 
     elif config.training.cur_dataset == "piqa":
-        datamodule = PIQADataModule(low_shot_config = config.datasets.text.low_shot_config,
-                                    model_key = config.model.key,
-                                    VILT_ckpt_dir=config.model.VILT_ckpt_dir,
-                                    VILT_tokenizer = config.model.VILT_tokenizer,
-                                    **build_datamodule_kwargs(config.datasets.text))
+        if use_uml:
+            datamodule = UML_PIQADataModule(low_shot_config = config.datasets.text.low_shot_config,
+                                        model_key = config.model.key,
+                                        VILT_ckpt_dir=config.model.VILT_ckpt_dir,
+                                        VILT_tokenizer = config.model.VILT_tokenizer,
+                                        helper_num_shots=helper_num_shots,
+                                        **build_datamodule_kwargs(config.datasets.text))
+        else:
+            datamodule = PIQADataModule(low_shot_config = config.datasets.text.low_shot_config,
+                                        model_key = config.model.key,
+                                        VILT_ckpt_dir=config.model.VILT_ckpt_dir,
+                                        VILT_tokenizer = config.model.VILT_tokenizer,
+                                        **build_datamodule_kwargs(config.datasets.text))
         batch_size = config.datasets.text.batch_size 
     
     elif config.training.cur_dataset == "commonsenseqa":
@@ -87,26 +122,50 @@ def main():
         batch_size = config.datasets.text.batch_size
 
     elif config.training.cur_dataset == "iNaturalist":
-        datamodule = iNaturalistDataModule(low_shot_config = config.datasets.image.low_shot_config,
-                                           model_key = config.model.key,
-                                               VILT_ckpt_dir=config.model.VILT_ckpt_dir,
-                                               VILT_tokenizer = config.model.VILT_tokenizer,
-                                               **build_datamodule_kwargs(config.datasets.image))
+        if use_uml:
+            datamodule = UML_iNaturalistDataModule(low_shot_config = config.datasets.image.low_shot_config,
+                                               model_key = config.model.key,
+                                                   VILT_ckpt_dir=config.model.VILT_ckpt_dir,
+                                                   VILT_tokenizer = config.model.VILT_tokenizer,
+                                                   helper_num_shots=helper_num_shots,
+                                                   **build_datamodule_kwargs(config.datasets.image))
+        else:
+            datamodule = iNaturalistDataModule(low_shot_config = config.datasets.image.low_shot_config,
+                                               model_key = config.model.key,
+                                                   VILT_ckpt_dir=config.model.VILT_ckpt_dir,
+                                                   VILT_tokenizer = config.model.VILT_tokenizer,
+                                                   **build_datamodule_kwargs(config.datasets.image))
         batch_size = config.datasets.image.batch_size
     elif config.training.cur_dataset == "places365":
-        datamodule = Places365DataModule(low_shot_config = config.datasets.image.low_shot_config,
-                                           model_key = config.model.key,
-                                               VILT_ckpt_dir=config.model.VILT_ckpt_dir,
-                                               VILT_tokenizer = config.model.VILT_tokenizer,
-                                               **build_datamodule_kwargs(config.datasets.image))
+        if use_uml:
+            datamodule = UML_Places365DataModule(low_shot_config = config.datasets.image.low_shot_config,
+                                               model_key = config.model.key,
+                                                   VILT_ckpt_dir=config.model.VILT_ckpt_dir,
+                                                   VILT_tokenizer = config.model.VILT_tokenizer,
+                                                   helper_num_shots=helper_num_shots,
+                                                   **build_datamodule_kwargs(config.datasets.image))
+        else:
+            datamodule = Places365DataModule(low_shot_config = config.datasets.image.low_shot_config,
+                                               model_key = config.model.key,
+                                                   VILT_ckpt_dir=config.model.VILT_ckpt_dir,
+                                                   VILT_tokenizer = config.model.VILT_tokenizer,
+                                                   **build_datamodule_kwargs(config.datasets.image))
         batch_size = config.datasets.image.batch_size
     
     elif config.training.cur_dataset == "sst2":
-        datamodule = SST2DataModule(low_shot_config = config.datasets.text.low_shot_config,
-                                    model_key = config.model.key,
-                                    VILT_ckpt_dir=config.model.VILT_ckpt_dir,
-                                    VILT_tokenizer = config.model.VILT_tokenizer,
-                                    **build_datamodule_kwargs(config.datasets.text))
+        if use_uml:
+            datamodule = UML_SST2DataModule(low_shot_config = config.datasets.text.low_shot_config,
+                                        model_key = config.model.key,
+                                        VILT_ckpt_dir=config.model.VILT_ckpt_dir,
+                                        VILT_tokenizer = config.model.VILT_tokenizer,
+                                        helper_num_shots=helper_num_shots,
+                                        **build_datamodule_kwargs(config.datasets.text))
+        else:
+            datamodule = SST2DataModule(low_shot_config = config.datasets.text.low_shot_config,
+                                        model_key = config.model.key,
+                                        VILT_ckpt_dir=config.model.VILT_ckpt_dir,
+                                        VILT_tokenizer = config.model.VILT_tokenizer,
+                                        **build_datamodule_kwargs(config.datasets.text))
         batch_size = config.datasets.text.batch_size
     
     else:
@@ -116,6 +175,16 @@ def main():
     train_dataloader = datamodule.train_dataloader()
     val_dataloader = datamodule.val_dataloader()
     
+    # Handle UML mode: train_dataloader will be a dict with 'target' and 'helper' keys
+    if use_uml and isinstance(train_dataloader, dict):
+        target_dataloader = train_dataloader['target']
+        helper_dataloader = train_dataloader['helper']
+        # Use target dataloader for step count
+        train_loader_for_steps = target_dataloader
+    else:
+        target_dataloader = train_dataloader
+        helper_dataloader = None
+        train_loader_for_steps = train_dataloader
     
     model = VILTLightningModule(batch_size=batch_size,
                                 learning_rate=config.training.learning_rate,
@@ -123,7 +192,7 @@ def main():
                                 adam_weight_decay=config.training.adam_weight_decay,
                                 adam_betas=config.training.adam_betas,
                                 warmup_ratio=config.training.warmup_ratio,
-                                max_steps=len(train_dataloader) * config.training.lightning.max_epochs,
+                                max_steps=len(train_loader_for_steps) * config.training.lightning.max_epochs,
                                 VILT_ckpt_dir=config.model.VILT_ckpt_dir,
                                 init_checkpoint_path=config.training.initialize_from_checkpoint,
                                 classifier_in_dim=config.model.classifier_in_dim,
@@ -134,8 +203,17 @@ def main():
                                 continual_sequence = config.training.continual_sequence,
                                 cur_dataset=config.training.cur_dataset,
                                 cl_setting = config.model.cl_setting,
-                                adapter=config.model.adapter
+                                adapter=config.model.adapter,
+                                use_uml=use_uml,
+                                uml_alpha=uml_alpha,
+                                perceiver=config.model.perceiver    
                                 )
+    
+    # Initialize helper loader iterator if using UML
+    if use_uml and helper_dataloader is not None:
+        model.helper_loader_iter = iter(helper_dataloader)
+        # Store helper loader in trainer for reset purposes
+        # We'll need to do this via a callback or hook
 
     print(">>>>>>",model.debug_print_params)
     callbacks = [
@@ -163,8 +241,12 @@ def main():
             callbacks=callbacks
         )
     
+    # Store helper loader in trainer for access in model
+    if use_uml and helper_dataloader is not None:
+        trainer.helper_loader = helper_dataloader
+    
     trainer.fit(model = model,
-                train_dataloaders=train_dataloader,
+                train_dataloaders=target_dataloader,
                 val_dataloaders=val_dataloader
                 )
     

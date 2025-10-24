@@ -4,9 +4,9 @@ training:
   _target_: definitions.TrainingArguments
   target_model: "piqa-update"
   cur_dataset: "piqa"
-  cur_expt_name: "task_cl" 
+  cur_expt_name: "piqa_cl" 
   adapter_weighted_method: "adapter-whole-weighted"
-  initialize_from_checkpoint: None
+  initialize_from_checkpoint: "/data/wangshu/wangshu_code/lihong_workspace/ATLAS/Checkpoint/task_cl/checkpoint/epoch=19-val_acc=0.7073.ckpt"
   resume_from_checkpoint: None
   continual_sequence: multi-first
   lightning:
@@ -32,8 +32,8 @@ training:
 datasets:
   _target_: definitions.TrainingDatasetsInfo
   selected: 
-  - vl
-  vl:
+  - text
+  text:
     data_dir: "/data/wangshu/wangshu_code/lihong_workspace/Data"
     low_shot_config: 
       key: False
@@ -47,7 +47,7 @@ datasets:
 model:
   _target_: definitions.ModelArguments
   key: "VILT"
-  num_classes: 3
+  num_classes: 2
   classifier_in_dim: 768
   update_method: "task-incremental-generalize" 
   VILT_ckpt_dir: "/data/wangshu/wangshu_code/lihong_workspace/Checkpoint"
@@ -61,4 +61,6 @@ model:
     adapter_infos:
       key: True      
       adapter_embed_dim: 48
+  perceiver:
+    key: False
 
